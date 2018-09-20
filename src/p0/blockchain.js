@@ -14,22 +14,20 @@ class BlockHeader {
 }
 
 class Block extends BlockHeader {
-
-    static calculateHash(blockNum, timestamp, previousHash, data) {
-        return CryptoJS.SHA256(blockNum + timestamp + previousHash + data).toString();
-    };
-
     constructor({block_num, timestamp, previous_hash, data}) {
         super(block_num, timestamp, previous_hash, null)
         this.hash = Block.calculateHash(block_num, timestamp, previous_hash, data)
         this.data = data
     }
 
-    // todo : change this to static
-    validateNext(blockNew) {
-        if (this.blockNum + 1 !== blockNew.blockNum) {
+    static calculateHash(blockNum, timestamp, previousHash, data) {
+        return CryptoJS.SHA256(blockNum + timestamp + previousHash + data).toString();
+    };
+
+    static validateNext(blockPrev, blockNew) {
+        if (blockPrev.blockNum + 1 !== blockNew.blockNum) {
             return -1;
-        } else if (this.hash !== blockNew.previousHash) {
+        } else if (blockPrev.hash !== blockNew.previousHash) {
             return -2;
         } else if (blockNew.hash !== Block.calculateHash(blockNew.blockNum, blockNew.timestamp, blockNew.previousHash, blockNew.data)) {
             return -3;
@@ -37,17 +35,7 @@ class Block extends BlockHeader {
         return 0;
     };
 
-    // todo : change this to static
-    generateNext(data) {
-        let nBlockNum = this.blockNum + 1;
-        let nTimeStamp = new Date().getTime() / 1000 | 1;
-        return new Block({
-            block_num: nBlockNum,
-            timestamp: nTimeStamp,
-            previous_hash: this.hash,
-            data: data
-        });
-    };
+
 
 }
 
@@ -76,7 +64,7 @@ class ChainHandler {
     }
 
     add(blockNew) {
-        let ret = this.latestBlock.validateNext(blockNew)
+        let ret = Block.validateNext(this, blockNew)
         if (ret) {
             _blockchain.push(blockNew);
         }
@@ -88,23 +76,47 @@ class ChainHandler {
             return false;
         }
         for (var i = 1; i < blockArray.length; i++) {
-            if (!blockArray[i - 1].validateNext(blockArray[i])) return false;
+            if (!Block.validateNext(blockArray[i - 1], blockArray[i])) return false;
         }
         return true;
     }
 
-    replaceWith(blockArray, startPos) {
-        if (blockArray.length <= this.blockHeight || !this.validateChain(blockArray)) return false;
-        //todo: replace chain
+    merge(blockArray) {
+        if (blockArray.length <= this.blockHeight) {
+            return false;
+        }
 
-        //1. verify and take the tail of blockArray, then generate the block structure
+        if (this.genesis.hash !== blockArray[0].hash) {
+            return false; // genesis not equal
+        }
 
-        //2. cut the origin block array
+        let iOrg = this.blockHeight - 1;
+        let i = blockArray.length - 1;
+        while (i > 0) {
+            if (blockArray[i - 1].hash !== blockArray[i].previousHash) return false; // chain error
+            if (this.chain[Math.min(iOrg, i)] === blockArray[i].previousHash) break;
+            i--;
+        }
 
-        //3. combine then
+        if(i <= 1) return false;
 
+        // combine the two chain
+        for(let j = i; j < blockArray.length; j ++){
+            _blockchain[j] = blockArray[j]
+        }
         return true;
     }
+
+    generateNext(data) {
+        let nBlockNum = this.blockHeight;
+        let nTimeStamp = new Date().getTime() / 1000 | 1;
+        return new Block({
+            block_num: nBlockNum,
+            timestamp: nTimeStamp,
+            previous_hash: this.latestBlock.hash,
+            data: data
+        });
+    };
 
 }
 
