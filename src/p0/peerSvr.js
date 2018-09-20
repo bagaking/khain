@@ -1,16 +1,16 @@
 'use strict';
 
-const ws = require("ws");
+const WebSocket = require("ws");
 const ChainHandler = require("./blockchain")
 
 let _peers = [];
 
 let _ch = new ChainHandler({
     block_num: 0,
-    timestamp: Date.now(),
+    timestamp: 0,
     previous_hash: "0x0",
     data: "genesis block"
-})
+}) //todo : Time Not Equal
 
 class PeerSvr {
 
@@ -24,6 +24,7 @@ class PeerSvr {
             PeerSvr.handler(ws)
         })
         this.svr = svr
+        console.log("peer svr start at port : " + this.port)
         return this
     }
 
@@ -35,12 +36,24 @@ class PeerSvr {
         return _peers.map(s => s._socket.remoteAddress + ':' + s._socket.remotePort)
     }
 
+    static addPeers(peers) {
+        peers.forEach(peerAddr => {
+            var ws = new WebSocket(peerAddr.startsWith("ws://") ? peerAddr : "ws://" + peerAddr);
+            ws.on('open', () => {
+                PeerSvr.handler(ws)
+                PeerSvr.rspLatest(ws) // try sync
+            });
+        })
+
+    }
+
     static get ch() {
         return _ch
     }
 
 
     static rsp(ws, id, data) {
+        console.log(`rsp -------- \nid: ${id} \ndata: ${data}\nrsp end --------`)
         let wss = ws instanceof Array ? ws : [ws]
         for (let w of wss) {
             w.send(JSON.stringify({
@@ -51,7 +64,7 @@ class PeerSvr {
     }
 
     static broadcast(id, data) {
-        _peers.forEach(ws.send(JSON.stringify({
+        _peers.forEach(ws => ws.send(JSON.stringify({
             id: id,
             data: data
         })));
@@ -59,9 +72,11 @@ class PeerSvr {
 
     static handler(ws) {
         _peers.push(ws)
+        console.log("peers added " + ws.remoteAddress + ':' + ws.remotePort)
         ws.on('message', data => {
-            var msg = JSON.parse(data);// todo: msg.data may not correct here (for a block data, json should not be parse)
-            switch (msg.type) {
+            let msg = JSON.parse(data);
+            console.log(`msg || ${data}`)
+            switch (msg.id) {
                 case "req:ch/latestBlock":
                     PeerSvr.rspLatest(ws)
                     break;
@@ -69,11 +84,9 @@ class PeerSvr {
                     PeerSvr.rspChain(ws)
                     break;
                 case "rsp:ch/latestBlock":
-                    console.log(data)
                     PeerSvr.mergeBlock(JSON.parse(msg.data));
                     break;
                 case "rsp:ch/chain":
-                    console.log(data)
                     PeerSvr.mergeChain(ws, JSON.parse(msg.data));
                     break;
             }

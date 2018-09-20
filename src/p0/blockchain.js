@@ -18,6 +18,7 @@ class Block extends BlockHeader {
         super(block_num, timestamp, previous_hash, null)
         this.hash = Block.calculateHash(block_num, timestamp, previous_hash, data)
         this.data = data
+        console.log("try create block " + JSON.stringify(this))
     }
 
     static calculateHash(blockNum, timestamp, previousHash, data) {
@@ -108,6 +109,7 @@ class ChainHandler {
     }
 
     generateNext(data) {
+        if(data === undefined) return null;
         let nBlockNum = this.blockHeight;
         let nTimeStamp = new Date().getTime() / 1000 | 1;
         return new Block({

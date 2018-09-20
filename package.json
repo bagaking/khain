@@ -7,8 +7,13 @@
   "author": "bagaking <zfaustk@qq.com>",
   "license": "MIT",
   "dependencies": {
+    "body-parser": "^1.18.3",
     "crypto-js": "^3.1.9-1",
     "express": "^4.16.3",
-    "ws": "^6.0.0"
+    "ws": "^6.0.0",
+    "yargs": "^12.0.2"
+  },
+  "scripts": {
+    "start": "node ./src/p0"
   }
 }
