@@ -2,7 +2,7 @@
 
 blockchain in progress
 
-## P0 : a embryonic blockchain
+## P0 : An embryonic blockchain
 
 P0 is not a blockchain, strictly speaking.
 
