@@ -1,6 +1,6 @@
 'use strict';
 
-const CryptoJS = require("crypto-js");
+const crypto = require("../utils/crypto")
 
 let _blockchain = [];
 
@@ -22,7 +22,7 @@ class Block extends BlockHeader {
     }
 
     static calculateHash(blockNum, timestamp, previousHash, data) {
-        return CryptoJS.SHA256(blockNum + timestamp + previousHash + data).toString();
+        return crypto.sha256(blockNum + timestamp + previousHash + data);
     };
 
     static validateNext(blockPrev, blockNew) {
