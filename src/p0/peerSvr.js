@@ -2,15 +2,11 @@
 
 const WebSocket = require("ws");
 const ChainHandler = require("./blockchain")
+const genesis = require("./genesis")
 
 let _peers = [];
 
-let _ch = new ChainHandler({
-    block_num: 0,
-    timestamp: 0,
-    previous_hash: "0x0",
-    data: "genesis block"
-}) //todo : Time Not Equal
+let _ch = new ChainHandler(genesis)
 
 class PeerSvr {
 
