@@ -4,6 +4,7 @@ const WebSocket = require("ws")
 const R = require("ramda")
 const DB = require("../utils/db")
 const EventEmitter = require("events")
+const GlobalConf = require("../../globalConf")
 /*
     plan :
     - connect to peer
@@ -56,6 +57,7 @@ class PeerMsg {
 
 }
 
+
 class PeerMgr {
 
     /**
@@ -70,6 +72,8 @@ class PeerMgr {
         this.port = port;
         /** @type {EventEmitter} */
         this.emitter = new EventEmitter();
+        /** @type {DB} - handle avaliable peer table, */
+        this.db = new DB(`${GlobalConf.dirRoot}/runtime/p1/${this.host}/${this.port}`)
     }
 
     /**

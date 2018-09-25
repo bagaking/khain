@@ -10,7 +10,9 @@ const leveldown = require('leveldown')
 
 module.exports = class {
     constructor(path) {
-        this.db = levelup(leveldown('./mydb'))
+        this.path = path
+        this.db = levelup(leveldown(path))
+        console.log(`db loaded ${path}`)
     }
 
     async get(key) {
